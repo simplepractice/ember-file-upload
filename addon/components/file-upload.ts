@@ -1,7 +1,6 @@
 import Component from '@glimmer/component';
 import { inject as service } from '@ember/service';
-import { action } from '@ember/object';
-
+import { modifier } from 'ember-modifier';
 import uuid from '../system/uuid';
 import UploadFile from 'ember-file-upload/upload-file';
 import Queue from '../queue';
@@ -105,21 +104,17 @@ export default class FileUploadComponent extends Component<FileUploadArgs> {
       return this.args.queue;
     }
 
-    if (this.args.name) {
-      return this.fileQueue.findOrCreate(this.args.name);
-    }
-
-    return this.fileQueue.findOrCreate(DEFAULT_QUEUE);
+    return this.fileQueue.findOrCreate(this.args.name ?? DEFAULT_QUEUE);
   }
 
   get for() {
     return this.args.for || `file-input-${uuid.short()}`;
   }
 
-  @action
-  attachListeners() {
+  bindListeners = modifier(() => {
     this.queue.addListener(this);
-  }
+    return () => this.queue.removeListener(this);
+  });
 
   fileAdded(file: UploadFile) {
     this.args.onFileAdd?.(file);
